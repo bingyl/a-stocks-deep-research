@@ -1,0 +1,135 @@
+# =============================================================================
+# 演示 / 参考编排（自包含）：API + Postgres + 官方 Milvus standalone
+# -----------------------------------------------------------------------------
+# 适用：新环境试用、配置人员对照。你自己的生产/本机实况请继续用 docker-compose.yml。
+#
+# 启动：
+#   1) cp .env.example .env   # 填写 LLM / Embedding 等密钥
+#   2) 参考下方「必改项」，或直接用本文件 environment 里的演示 DATABASE_URL
+#   3) mkdir -p volumes/etcd volumes/minio volumes/milvus data logs
+#      # Linux 若 milvus 报 permission denied：chmod -R a+rwX volumes
+#   4) docker compose -f docker-compose.demo.yml up -d --build
+#
+# 访问：http://127.0.0.1:8000/   健康检查：/health
+#
+# 必改项（容器内连库）：
+#   DATABASE_URL 主机名必须是服务名 postgres，不能是 localhost
+#   密码含 ? 等特殊字符须 URL 编码（? → %3F）
+# =============================================================================
+
+version: "3.5"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: a-stock-demo-postgres
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      POSTGRES_USER: postgres
+      # 演示密码；生产务必改掉，并同步改 api 的 DATABASE_URL
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: a_stock_deep_research
+    ports:
+      - "5432:5432"
+    volumes:
+      - demo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d a_stock_deep_research"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  api:
+    build: .
+    image: a-stock-api:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # 覆盖 .env 里可能写的 localhost，保证容器内连到本文件的 postgres 服务
+      DATABASE_URL: postgresql+psycopg://postgres:change-me@postgres:5432/a_stock_deep_research
+      VECTOR_CHROMA_DIR: /app/data/vector_chroma
+      # 默认用本机卷上的 Chroma；若改用 Milvus，在 .env 设 VECTOR_BACKEND=milvus
+      VECTOR_MILVUS_URI: http://standalone:19530
+      DEBUG: ${DEBUG:-false}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      standalone:
+        condition: service_started
+    restart: unless-stopped
+
+  # ----- 以下三段保持与 Milvus 官方 standalone compose 一致（勿随意改结构）-----
+  # 来源参考: milvus-io/milvus deployments/docker/standalone/docker-compose.yml
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.25
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v3.0.0
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MINIO_REGION: us-east-1
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - "etcd"
+      - "minio"
+
+volumes:
+  demo_pgdata:
+
+networks:
+  default:
+    name: milvus

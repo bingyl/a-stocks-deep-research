@@ -1,6 +1,15 @@
-# 本地/单机编排示例
+# 本地/单机编排（按你实际环境定制：外挂已有 pgsql 网络等）
+# 新人/试用请看自包含参考：docker-compose.demo.yml
+#   docker compose -f docker-compose.demo.yml up -d --build
+#
 #   docker compose up -d --build
 # 密钥与 DATABASE_URL 等请放在 .env（勿提交仓库）
+#
+# Docker 内连已有 Postgres 容器（如 blog-server 的 pgsql）时：
+#   1) api 需加入对方网络（见下方 blog_net）
+#   2) .env 里 DATABASE_URL 主机名用容器名 pgsql，不要用 localhost
+#      例: postgresql+psycopg://postgres:URL编码密码@pgsql:5432/a_stock_deep_research
+#      密码里的 ? 须写成 %3F
 version: '3.5'
 services:
   api:
@@ -22,6 +31,10 @@ services:
     restart: unless-stopped
     depends_on:
       - "standalone"
+    networks:
+      - default
+      # 接入已有 pgsql（blog-server compose 的 mynet），容器内用主机名 pgsql
+      - blog_net
 
   etcd:
     container_name: milvus-etcd
@@ -86,3 +99,6 @@ services:
 networks:
   default:
     name: milvus
+  blog_net:
+    external: true
+    name: blog-server_mynet

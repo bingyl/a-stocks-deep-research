@@ -16,6 +16,7 @@
 - [项目结构](#项目结构)
 - [主要 API](#主要-api)
 - [快速开始](#快速开始)
+- [Docker 部署](#docker-部署)
 - [配置要点](#配置要点)
 - [设计说明](#设计说明)
 
@@ -333,19 +334,70 @@ python -m app.extensions.stocks.fetch_concept_boards --help
 
 ---
 
+## Docker 部署
+
+仓库里有两份 Compose，用途不同：
+
+| 文件 | 用途 |
+|------|------|
+| [`docker-compose.demo.yml`](docker-compose.demo.yml) | **自包含参考**：内置 Postgres + 官方 [Milvus standalone](https://github.com/milvus-io/milvus)（etcd / minio / standalone）+ API，适合新人试用与对照配置 |
+| [`docker-compose.yml`](docker-compose.yml) | **按实况定制**：例如外挂已有 Postgres（接入外部网络、主机名用容器名），以你的环境为准，不要照抄进陌生机器 |
+
+### 演示编排（推荐先看这个）
+
+```bash
+cp .env.example .env
+# 编辑 .env：填入 LLM_API_KEY / EMBEDDING_API_KEY / BOCHA_API_KEY 等
+
+mkdir -p volumes/etcd volumes/minio volumes/milvus data logs
+# Linux 若 Milvus 报 permission denied：
+#   chmod -R a+rwX volumes
+
+docker compose -f docker-compose.demo.yml up -d --build
+```
+
+- 入口：`http://127.0.0.1:8000/`，健康检查：`/health`
+- 演示库：服务名 `postgres`，库名 `a_stock_deep_research`，演示密码见 `docker-compose.demo.yml`（生产务必改掉）
+- `demo` 文件会用环境变量 **覆盖** `.env` 里的 `DATABASE_URL`，保证容器内连的是 compose 里的 `postgres`，而不是 `localhost`
+
+默认向量后端仍可按 `.env` 使用 **Chroma**（数据在 `./data`）。若要改用本编排里的 Milvus，在 `.env` 设置：
+
+```env
+VECTOR_BACKEND=milvus
+VECTOR_MILVUS_URI=http://standalone:19530
+```
+
+### 实况编排注意点
+
+容器内 **`localhost` 不是宿主机**。若 Postgres 跑在别的 compose / 容器里：
+
+1. 把 `api` 加入对方 Docker 网络（见实况 `docker-compose.yml` 的 `blog_net` 示例）
+2. `.env` 里 `DATABASE_URL` 主机名写成 **容器名**（如 `pgsql`），不要写 `localhost`
+3. 密码含特殊字符须 URL 编码（例如 `?` → `%3F`）
+
+单独构建镜像：
+
+```bash
+docker build -t a-stock-api:latest .
+```
+
+---
+
 ## 配置要点
 
 见 `.env.example`。常用项：
 
 | 变量 | 含义 |
 |------|------|
-| `DATABASE_URL` | 业务库（`sqlite+aiosqlite` / `postgresql+psycopg` 异步）；SQLite 时自动旁路 docstore / checkpoints |
+| `DATABASE_URL` | 业务库（`sqlite+aiosqlite` / `postgresql+psycopg` 异步）；SQLite 时自动旁路 docstore / checkpoints；**Docker 内连库时主机名用服务名/容器名，勿用 localhost** |
 | `VECTOR_BACKEND` | `chroma` / `milvus` |
+| `VECTOR_MILVUS_URI` | Milvus 地址；compose 内一般为 `http://standalone:19530` |
 | `RAG_ENABLED` · `RAG_FOLLOWUP_TOOL` | 入库 / 追问短路开关 |
 | `RAG_STALE_HOURS` | 知识库结果过期时间 |
 | `AGENT_MAX_TOOL_ROUNDS` | 主编排工具轮次预算 |
 | `FOLLOWUP_*_LIMIT` | 追问工具/模型硬上限 |
-| `DEBUG` | `true` 时写 `logs/app_debug.log` |
+| `AUTH_ENABLED` · `JWT_SECRET` | 用户认证与 JWT |
+| `DEBUG` | `true` 时写 `logs/app_debug.log`，并开放 `/docs` |
 
 日志：`logs/app.log`。
 
