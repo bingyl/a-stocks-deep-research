@@ -1,7 +1,7 @@
 # 本地/单机编排示例
 #   docker compose up -d --build
 # 密钥与 DATABASE_URL 等请放在 .env（勿提交仓库）
-
+version: '3.5'
 services:
   api:
     build: .
@@ -35,7 +35,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/etcd:/etcd
     command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
     healthcheck:
-      test: [ "CMD", "etcdctl", "endpoint", "health" ]
+      test: ["CMD", "etcdctl", "endpoint", "health"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -53,7 +53,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
     command: minio server /minio_data --console-address ":9001"
     healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -61,9 +61,9 @@ services:
   standalone:
     container_name: milvus-standalone
     image: milvusdb/milvus:v3.0.0
-    command: [ "milvus", "run", "standalone" ]
+    command: ["milvus", "run", "standalone"]
     security_opt:
-      - seccomp:unconfined
+    - seccomp:unconfined
     environment:
       MINIO_REGION: us-east-1
       ETCD_ENDPOINTS: etcd:2379
@@ -71,7 +71,7 @@ services:
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9091/healthz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
       interval: 30s
       start_period: 90s
       timeout: 20s
@@ -83,7 +83,6 @@ services:
       - "etcd"
       - "minio"
 
-  networks:
-    default:
-      name: milvus
-
+networks:
+  default:
+    name: milvus

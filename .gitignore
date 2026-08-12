@@ -36,6 +36,11 @@ desktop.ini
 !.env.example
 !.env.*.example
 
+# 仅本机使用的服务器同步脚本 / 凭据（勿提交）
+scripts/copy_env_to_server.py
+scripts/copy_env_to_server.ps1
+scripts/deploy.local.env
+
 # Runtime data & logs
 data/
 logs/
