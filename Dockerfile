@@ -24,8 +24,9 @@ RUN apt-get update \
 
 # 先装依赖，利用层缓存
 COPY requirements.txt requirements-vector.txt ./
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt -r requirements-vector.txt
+RUN pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn \
+    && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn \
+        -r requirements.txt -r requirements-vector.txt
 
 # 应用代码（不含 .env / data / logs）
 COPY main.py ./
@@ -41,7 +42,7 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8000/docs >/dev/null || exit 1
+    CMD curl -fsS http://127.0.0.1:8000/health >/dev/null || exit 1
 
 # 勿用 main.py 的 127.0.0.1；容器内需监听 0.0.0.0
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
