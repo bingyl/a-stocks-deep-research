@@ -1,0 +1,22 @@
+# 本地/单机编排示例
+#   docker compose up -d --build
+# 密钥与 DATABASE_URL 等请放在 .env（勿提交仓库）
+
+services:
+  api:
+    build: .
+    image: a-stock-api:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # 容器内建议用挂载卷路径；若 .env 仍是 Windows 相对路径会被下面覆盖为容器路径
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/app_local_sqlite.db}
+      VECTOR_CHROMA_DIR: /app/data/vector_chroma
+      DEBUG: ${DEBUG:-false}
+    volumes:
+      # 绑定到项目目录：宿主机直接看 ./data、./logs
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped

@@ -1,0 +1,114 @@
+<div class="layout">
+  <div class="board">
+    <section class="card">
+      <h2>快速检索</h2>
+      <div class="search-wrap">
+        <div class="search">
+          <input
+            id="q"
+            placeholder="例如：网络 / 贵州茅台 / 600519 / gzmt"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="btn" type="button">查询</button>
+        </div>
+        <div id="suggest" class="suggest" role="listbox" aria-label="股票联想"></div>
+      </div>
+      <div class="msg" id="msg">试试输入「网络」，会列出名称中带「网络」的 A 股</div>
+      <div class="chips" id="examples">
+        <button type="button" class="chip" data-q="网络">网络</button>
+        <button type="button" class="chip" data-q="银行">银行</button>
+        <button type="button" class="chip" data-q="600519">600519</button>
+        <button type="button" class="chip" data-q="gzmt">gzmt</button>
+        <button type="button" class="chip" data-q="平安">平安</button>
+      </div>
+    </section>
+
+    <aside class="card recent-card">
+      <h2>最近查看</h2>
+      <div id="recent" class="recent-tags">
+        <div class="empty-panel">查询过的股票会出现在这里</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-tabs" role="tablist" aria-label="结果视图">
+      <button
+        type="button"
+        class="result-tab is-active"
+        role="tab"
+        id="tabFinance"
+        data-tab="finance"
+        aria-selected="true"
+        aria-controls="panelFinance"
+      >
+        财务信息
+      </button>
+      <button
+        type="button"
+        class="result-tab"
+        role="tab"
+        id="tabAnalyze"
+        data-tab="analyze"
+        aria-selected="false"
+        aria-controls="panelAnalyze"
+      >
+        深度分析
+      </button>
+    </div>
+
+    <div
+      class="result-panel"
+      id="panelFinance"
+      role="tabpanel"
+      aria-labelledby="tabFinance"
+    >
+      <div class="result-empty" id="financeEmpty">
+        请先选择一只股票
+      </div>
+      <section class="card" id="quoteCard" hidden></section>
+      <section class="card" id="financeCard" hidden></section>
+    </div>
+
+    <div
+      class="result-panel"
+      id="panelAnalyze"
+      role="tabpanel"
+      aria-labelledby="tabAnalyze"
+      hidden
+    >
+      <section class="card" id="agentCard">
+        <h2>AI 投研分析</h2>
+        <div class="agent-bar">
+          <button id="agentBtn" type="button">开始分析</button>
+          <button id="agentCancelBtn" type="button" class="btn-secondary" hidden>
+            取消分析
+          </button>
+          <button id="agentRetryBtn" type="button" class="btn-secondary" hidden>
+            重新分析
+          </button>
+          <button id="agentViewBtn" type="button" class="btn-secondary" disabled>
+            弹窗预览
+          </button>
+          <button id="agentHtmlBtn" type="button" class="btn-secondary" disabled>
+            下载 HTML
+          </button>
+        </div>
+        <div class="msg" id="agentMsg">点击「开始分析」：六维分析（财务 → 股性估值 → 板块联动 → 技术面 → 情报 → 报告）</div>
+        <div id="agentOut" class="agent-md" hidden></div>
+        <div id="agentTools" class="agent-tools" hidden></div>
+        <section class="followup-card" id="followupCard" hidden>
+          <h3>继续追问</h3>
+          <p class="followup-hint">基于本次深研报告继续对话；与金融/该股无关的问题会被拒答。</p>
+          <div class="chat-list" id="followupChatList"></div>
+          <div class="chat-compose">
+            <textarea id="followupInput" rows="4" placeholder="例如：毛利率下滑的主要原因是什么？"></textarea>
+            <button type="button" id="followupSend">发送</button>
+          </div>
+          <div class="chat-status" id="followupStatus"></div>
+        </section>
+      </section>
+    </div>
+  </div>
+</div>

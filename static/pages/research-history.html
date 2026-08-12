@@ -1,0 +1,30 @@
+<div class="layout history-layout">
+  <section class="card history-toolbar-card">
+    <div class="history-toolbar">
+      <div class="history-search">
+        <input
+          id="historyQ"
+          type="search"
+          placeholder="搜索代码、名称或报告关键词"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="historySearchBtn" type="button">搜索</button>
+      </div>
+      <div class="history-toolbar-right">
+        <span class="history-meta" id="historyMeta"></span>
+        <button id="historyCompareBtn" type="button" class="btn-secondary" disabled>
+          对比选中
+        </button>
+        <button id="historyRefreshBtn" type="button" class="btn-secondary">刷新</button>
+      </div>
+    </div>
+    <p class="history-hint">
+      支持取消进行中的任务；失败/取消后「重跑」会在原任务上重新分析（不新建记录）。勾选两份已完成报告可对比。
+    </p>
+  </section>
+
+  <section class="card history-list-card">
+    <div id="historyList" class="history-list"></div>
+  </section>
+</div>

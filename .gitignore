@@ -1,0 +1,62 @@
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Runtime data & logs
+data/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Vector / RAG local stores (if placed outside data/)
+chroma/
+*.chroma/
+
+# Local caches
+app/extensions/stocks/data/*_cache.json
+*.cache
+
+# Cursor / agent local
+.cursor/
+agent-transcripts/
+
+# Packaging / temp
+*.tmp
+*.bak
+*.orig

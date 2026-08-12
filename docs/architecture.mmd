@@ -1,0 +1,76 @@
+﻿flowchart TB
+  subgraph Client["客户端 static/"]
+    UI["深研页 / 历史页 / 追问面板"]
+    SSE_C["EventSource / fetch SSE"]
+  end
+
+  subgraph Gateway["FastAPI app/app.py"]
+    R_SEARCH["routers/search<br/>联想 · 股票池"]
+    R_STOCK["routers/stock<br/>概览 · 财务 · 行情"]
+    R_AGENT["routers/agent<br/>analyze / analyze/stream"]
+    R_REPORT["routers/reports<br/>报告 · 取消 · 追问 SSE"]
+    LIFE["lifespan<br/>建表 · checkpointer · 孤儿任务回收 · 定时同步"]
+  end
+
+  subgraph AgentLayer["Agent 层 app/agent/"]
+    ANALYZER["analyzer.py<br/>深研 SSE 编排"]
+    DETACH["sse_bridge.iter_detached<br/>分析 Task 与 SSE 解耦"]
+    GRAPH["graph.py<br/>Deep Agents 主编排"]
+    PIPE["pipeline.py<br/>research_pipeline 六维 StateGraph"]
+    FOLLOW["followup.py<br/>追问 Agent"]
+    FTOOLS["followup_tools.py<br/>KB 短路 + singleflight"]
+    TOOLS["tools.py / rag_tools.py<br/>业务工具 · rag_search"]
+    MW["middleware.py<br/>模型/工具日志 · SSE 旁路推送"]
+  end
+
+  subgraph Domain["领域服务 app/services/"]
+    STOCK["stock / market / boards"]
+    REPORTS["reports<br/>任务状态机 · 同 code 互斥"]
+    JOBS["analysis_jobs<br/>RunControl · 取消 drain"]
+    CHAT["chat<br/>追问消息 DocStore"]
+    UNIVERSE["universe / sync_stocks"]
+  end
+
+  subgraph RAG["RAG app/rag/"]
+    INGEST["ingest<br/>切片 · embedding · upsert"]
+    KB["kb_lookup<br/>同参未过期父文档"]
+    RETR["retriever<br/>子向量召回 → 父文档组装"]
+    FRESH["freshness<br/>stale_hours"]
+  end
+
+  subgraph Persist["持久化 app/persistence/"]
+    DB["db/<br/>业务库 DATABASE_URL<br/>stocks · research_reports · sync_*"]
+    DOC["docstore/<br/>LangGraph Store<br/>父文档 · 追问历史"]
+    CP["checkpointer/<br/>分析短时记忆 thread_id"]
+    VS["vectorstore/<br/>Chroma / Milvus<br/>子块向量"]
+  end
+
+  subgraph External["外部依赖"]
+    LLM["LLM<br/>DeepSeek 等 OpenAI 兼容"]
+    EMB["Embedding<br/>DashScope text-embedding"]
+    BOCHA["博查搜索"]
+    MKT["行情/财务源<br/>akshare · 东财等"]
+  end
+
+  UI --> R_SEARCH & R_STOCK & R_AGENT & R_REPORT
+  SSE_C --> R_AGENT & R_REPORT
+  R_AGENT --> DETACH --> ANALYZER
+  ANALYZER --> GRAPH --> PIPE
+  ANALYZER --> JOBS & REPORTS
+  R_REPORT --> FOLLOW --> FTOOLS --> TOOLS
+  FOLLOW --> RETR
+  GRAPH --> TOOLS
+  PIPE --> TOOLS
+  TOOLS --> STOCK & BOCHA & MKT
+  TOOLS -.->|工具结果| INGEST
+  FTOOLS --> KB
+  INGEST --> EMB & VS & DOC
+  RETR --> VS & DOC
+  CHAT --> DOC
+  ANALYZER --> CP
+  REPORTS --> DB
+  STOCK --> DB
+  UNIVERSE --> DB
+  GRAPH --> LLM
+  FOLLOW --> LLM
+  MW --> SSE_C

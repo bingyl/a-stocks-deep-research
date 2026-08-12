@@ -1,0 +1,14 @@
+# 可选：向量库后端依赖（与主 requirements.txt 分离，按需安装）
+#   pip install -r requirements-vector.txt
+#
+# 本地：Chroma（默认 VECTOR_BACKEND=chroma）
+langchain-chroma>=0.2.0
+chromadb>=0.5.0
+numpy>=1.26.0
+# 生产：Milvus（VECTOR_BACKEND=milvus；URI 可为 http 服务或本地 .db Lite）
+langchain-milvus>=0.4.0
+milvus-lite>=3.2.0
+pymilvus>=3.0.1
+# 切片 / 中文分词（主 requirements 已含；此处便于单独装向量栈）
+langchain-text-splitters>=0.3.0
+jieba>=0.42.1

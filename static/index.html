@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>工作台 · A股深研</title>
+  <link rel="icon" href="/static/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/static/favicon-512.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="/static/favicon-512.png" />
+  <link rel="stylesheet" href="/static/css/app.css?v=20260812ui1" />
+</head>
+<body>
+  <!--
+    index = 壳层（侧栏 + 顶栏 + 内容槽）。
+    业务页面放在 static/pages/*.html，由 nav-config.js 注册。
+    新增菜单：新建 pages/xxx.html + 在 nav-config.js 加一项，无需改本文件结构。
+  -->
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar" aria-label="主导航">
+      <div class="sidebar-brand">
+        <img class="brand-mark" src="/static/favicon-512.png" width="36" height="36" alt="" />
+        <div class="brand-text">
+          <div class="brand-name">工作台</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav" aria-label="应用菜单"></nav>
+
+      <div class="sidebar-foot">
+        <div id="authUserBox" class="auth-user-box" hidden></div>
+        <a class="side-link" id="apiDocsLink" href="/docs" target="_blank" rel="noopener" hidden>API 文档</a>
+      </div>
+    </aside>
+
+    <div class="shell-main">
+      <header class="topbar">
+        <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="打开/关闭侧边栏">
+          菜单
+        </button>
+        <div class="topbar-title">
+          <h1 id="pageTitle">A股深研</h1>
+          <p class="sub" id="pageSub">输入代码、名称或拼音首字母，查询财务并做 AI 深度分析</p>
+        </div>
+        <div id="universeBadge" class="badge loading topbar-badge">股票池加载中…</div>
+      </header>
+
+      <div class="view-host" id="viewHost" aria-live="polite">
+        <div class="page-loading">页面加载中…</div>
+      </div>
+
+      <footer class="shell-footer">
+        行情：腾讯财经；财务：东方财富（经 AKShare）；AI：DeepSeek + 博查搜索。
+        数据仅供学习参考，非投资建议。
+      </footer>
+    </div>
+  </div>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+  <script type="module" src="/static/js/app.js?v=20260812session2"></script>
+</body>
+</html>
