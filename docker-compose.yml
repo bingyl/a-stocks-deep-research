@@ -21,7 +21,7 @@ services:
       - ./logs:/app/logs
     restart: unless-stopped
     depends_on:
-      - "milvus-standalone"
+      - "standalone"
 
   etcd:
     container_name: milvus-etcd
